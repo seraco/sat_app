@@ -21,6 +21,8 @@ import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+// import org.springframework.messaging.handler.annotation.MessageMapping;
+// import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -116,6 +118,8 @@ public class OrbitScheduler {
 
             currentDate = currentDate.shiftedBy(stepT);
 
+            // updateSat();
+
         } catch (OrekitException oe) {
 
             System.err.println(oe.getMessage());
@@ -123,5 +127,12 @@ public class OrbitScheduler {
         }
 
     }
+
+//    @SendTo("/update/satellite")
+//    public Satellite updateSat() {
+//
+//        return new Satellite(1, 2, 3, 4, 5, 6);
+//
+//    }
 
 }

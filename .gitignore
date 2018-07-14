@@ -2,7 +2,7 @@
 *.class
 
 # Log file
-*.log
+*.log*
 
 # BlueJ files
 *.ctxt
@@ -29,3 +29,7 @@ target/
 
 # Mac OS .DS_Store
 .DS_Store
+
+# React
+node_modules/
+build/
