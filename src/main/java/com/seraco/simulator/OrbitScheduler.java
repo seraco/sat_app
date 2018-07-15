@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
+import org.hipparchus.util.FastMath;
 import org.orekit.bodies.GeodeticPoint;
 import org.orekit.bodies.OneAxisEllipsoid;
 import org.orekit.data.DataProvidersManager;
@@ -169,6 +170,8 @@ public class OrbitScheduler {
             satellite.setOmega(currentOrbit.getPerigeeArgument());
             satellite.setRaan(currentOrbit.getRightAscensionOfAscendingNode());
             satellite.setLm(currentOrbit.getMeanAnomaly());
+            satellite.setLon(FastMath.toDegrees(geoPoint.getLongitude()));
+            satellite.setLat(FastMath.toDegrees(geoPoint.getLatitude()));
 
             repository.save(satellite);
 

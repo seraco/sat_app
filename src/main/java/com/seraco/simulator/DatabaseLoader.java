@@ -33,7 +33,8 @@ public class DatabaseLoader implements CommandLineRunner {
 				FastMath.toRadians(98.55),
 				FastMath.toRadians(90.0),
 				FastMath.toRadians(5.1917),
-                FastMath.toRadians(359.93)
+                FastMath.toRadians(359.93),
+				"red"
         ));
 
         this.repository.save(new Satellite(
@@ -42,7 +43,8 @@ public class DatabaseLoader implements CommandLineRunner {
                 FastMath.toRadians(9.0),
                 FastMath.toRadians(145.0),
                 FastMath.toRadians(230.0),
-                FastMath.toRadians(10.0)
+                FastMath.toRadians(10.0),
+				"green"
         ));
 
         this.repository.save(new Satellite(
@@ -51,7 +53,18 @@ public class DatabaseLoader implements CommandLineRunner {
                 FastMath.toRadians(30.0),
                 FastMath.toRadians(55.0),
                 FastMath.toRadians(10.0),
-                FastMath.toRadians(100.0)
+                FastMath.toRadians(100.0),
+				"yellow"
+        ));
+
+        this.repository.save(new Satellite(
+                a,
+                e,
+                FastMath.toRadians(75.0),
+                FastMath.toRadians(140.0),
+                FastMath.toRadians(2.0),
+                FastMath.toRadians(233.0),
+                "blue"
         ));
 	}
 }

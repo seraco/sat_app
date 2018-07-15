@@ -19,17 +19,24 @@ public class Satellite {
 	private double omega;
 	private double raan;
 	private double lm;
+	private double lon;
+	private double lat;
+	private String color;
 	private @Version @JsonIgnore Long version;
 
 	private Satellite() {}
 
-	public Satellite(double semimaj, double eccen, double incli, double periarg, double rasc, double meanom) {
+	public Satellite(double semimaj, double eccen, double incli, double periarg,
+                     double rasc, double meanom, String col) {
+
 		this.a = semimaj;
 		this.e = eccen;
 		this.i = incli;
 		this.omega = periarg;
 		this.raan = rasc;
 		this.lm = meanom;
+		this.color = col;
+
 	}
 
     public Long getId() {
@@ -60,6 +67,14 @@ public class Satellite {
         return lm;
     }
 
+    public double getLon() {
+        return lon;
+    }
+
+    public double getLat() {
+        return lat;
+    }
+
     public void setA(double semimaj) {
 	    this.a = semimaj;
     }
@@ -84,4 +99,11 @@ public class Satellite {
         this.lm = meananom;
     }
 
+    public void setLon(double lon) {
+        this.lon = lon;
+    }
+
+    public void setLat(double lat) {
+        this.lat = lat;
+    }
 }

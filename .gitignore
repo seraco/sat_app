@@ -33,3 +33,6 @@ target/
 # React
 node_modules/
 build/
+
+# Environment
+.env
