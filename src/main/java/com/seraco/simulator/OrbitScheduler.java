@@ -61,18 +61,18 @@ public class OrbitScheduler {
 
         try {
 
-            File home       = new File(System.getProperty("user.home"));
-            File orekitData = new File(home, "orekit-data");
+            // File home       = new File(System.getProperty("user.home"));
+            File orekitData = new File("orekit-data");
 
             if (!orekitData.exists()) {
 
                 System.err.format(Locale.US, "Failed to find %s folder%n", orekitData.getAbsolutePath());
-                System.err.format(
-                        Locale.US,
-                        "You need to download %s from the %s page and unzip it in %s for this tutorial to work%n",
-                        "orekit-data.zip", "https://www.orekit.org/forge/projects/orekit/files",
-                        home.getAbsolutePath()
-                );
+                // System.err.format(
+                //         Locale.US,
+                //         "You need to download %s from the %s page and unzip it in %s for this tutorial to work%n",
+                //         "orekit-data.zip", "https://www.orekit.org/forge/projects/orekit/files",
+                //         home.getAbsolutePath()
+                // );
                 System.exit(1);
 
             }
