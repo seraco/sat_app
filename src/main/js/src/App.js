@@ -54,8 +54,8 @@ class App extends React.Component {
 		this.setState({
 			viewport: {
 				...this.state.viewport,
-				width: this.mapWidth || Math.round(0.8 * window.innerWidth),
-				height: this.mapHeight || window.innerHeight
+				width: this.mapWidth || Math.round(0.7 * window.innerWidth),
+				height: this.mapHeight || Math.round(0.5 * window.innerWidth)
 			}
 		});
 	};
@@ -111,21 +111,23 @@ class App extends React.Component {
 		return (
 			<div className="App">
 				<SatelliteList satellites={this.state.satellites}/>
-				<MapGL
-					{...viewport}
-					mapStyle="mapbox://styles/mapbox/dark-v9"
-					onViewportChange={this._updateViewport}
-					mapboxApiAccessToken={TOKEN}>
+				<div className="MapContainer"><div className="Map">
+					<MapGL
+						{...viewport}
+						mapStyle="mapbox://styles/mapbox/dark-v9"
+						onViewportChange={this._updateViewport}
+						mapboxApiAccessToken={TOKEN}>
 
-					{ this.state.satellites.map(this._renderSatelliteMarker) }
+						{this.state.satellites.map(this._renderSatelliteMarker)}
 
-					{ this.state.satellites.map(this._renderPopup) }
+						{this.state.satellites.map(this._renderPopup)}
 
-					<div className="nav" style={navStyle}>
-						<NavigationControl
-							onViewportChange={this._updateViewport}/>
-					</div>
-				</MapGL>
+						<div className="nav" style={navStyle}>
+							<NavigationControl
+								onViewportChange={this._updateViewport}/>
+						</div>
+					</MapGL>
+				</div></div>
 			</div>
 		)
 	}
@@ -137,22 +139,24 @@ class SatelliteList extends React.Component{
 			<Satellite key={satellite._links.self.href} satellite={satellite}/>
 		);
 		return (
-			<table>
-				<tbody>
-					<tr>
-						<th>Satellite</th>
-						<th>a</th>
-						<th>e</th>
-						<th>i</th>
-                        <th>pa</th>
-						<th>raan</th>
-						<th>omega</th>
-						<th>lon</th>
-						<th>lat</th>
-					</tr>
-					{satellites}
-				</tbody>
-			</table>
+			<div className="SatelliteList">
+				<table>
+					<tbody>
+						<tr>
+							<th>Satellite</th>
+							<th>a</th>
+							<th>e</th>
+							<th>i</th>
+	                        <th>pa</th>
+							<th>raan</th>
+							<th>omega</th>
+							<th>lon</th>
+							<th>lat</th>
+						</tr>
+						{satellites}
+					</tbody>
+				</table>
+			</div>
 		)
 	}
 }
