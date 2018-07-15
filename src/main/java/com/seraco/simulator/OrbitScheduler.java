@@ -5,29 +5,38 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import org.hipparchus.util.FastMath;
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
+import org.orekit.bodies.GeodeticPoint;
+import org.orekit.bodies.OneAxisEllipsoid;
 import org.orekit.data.DataProvidersManager;
 import org.orekit.data.DirectoryCrawler;
 import org.orekit.errors.OrekitException;
+import org.orekit.frames.FactoryManagedFrame;
 import org.orekit.frames.Frame;
 import org.orekit.frames.FramesFactory;
-import org.orekit.orbits.KeplerianOrbit;
-import org.orekit.orbits.Orbit;
-import org.orekit.orbits.PositionAngle;
+import org.orekit.orbits.*;
 import org.orekit.propagation.SpacecraftState;
-import org.orekit.propagation.analytical.KeplerianPropagator;
+import org.orekit.propagation.analytical.EcksteinHechlerPropagator;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
+import org.orekit.utils.Constants;
+import org.orekit.utils.IERSConventions;
+import org.orekit.utils.TimeStampedPVCoordinates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-// import org.springframework.messaging.handler.annotation.MessageMapping;
-// import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 
-@Component
+@EnableScheduling
+@Controller
 public class OrbitScheduler {
+
+    @Autowired
+    private SimpMessagingTemplate template;
 
     private static final Logger log = LoggerFactory.getLogger(OrbitScheduler.class);
 
@@ -37,54 +46,46 @@ public class OrbitScheduler {
 
     private AbsoluteDate currentDate;
 
-    private KeplerianPropagator kepler;
+    private final SatelliteRepository repository;
 
-    OrbitScheduler() {
+    private OneAxisEllipsoid earth;
+
+    private final Frame inertialFrame;
+
+    @Autowired
+    OrbitScheduler(SatelliteRepository repository) {
+
+        this.repository = repository;
+        this.inertialFrame = FramesFactory.getEME2000();
 
         try {
 
-            // configure Orekit
             File home       = new File(System.getProperty("user.home"));
             File orekitData = new File(home, "orekit-data");
+
             if (!orekitData.exists()) {
-                System.err.format(Locale.US, "Failed to find %s folder%n",
-                        orekitData.getAbsolutePath());
-                System.err.format(Locale.US, "You need to download %s from the %s page and unzip it in %s for this tutorial to work%n",
+
+                System.err.format(Locale.US, "Failed to find %s folder%n", orekitData.getAbsolutePath());
+                System.err.format(
+                        Locale.US,
+                        "You need to download %s from the %s page and unzip it in %s for this tutorial to work%n",
                         "orekit-data.zip", "https://www.orekit.org/forge/projects/orekit/files",
-                        home.getAbsolutePath());
+                        home.getAbsolutePath()
+                );
                 System.exit(1);
+
             }
+
             DataProvidersManager manager = DataProvidersManager.getInstance();
             manager.addProvider(new DirectoryCrawler(orekitData));
 
-            // Initial date in UTC time scale
             TimeScale utc = TimeScalesFactory.getUTC();
             currentDate = new AbsoluteDate(2004, 01, 01, 23, 30, 00.000, utc);
 
-            // Initial orbit parameters
-            double a = 24396159; // semi major axis in meters
-            double e = 0.72831215; // eccentricity
-            double i = FastMath.toRadians(7); // inclination
-            double omega = FastMath.toRadians(180); // perigee argument
-            double raan = FastMath.toRadians(261); // right ascension of ascending node
-            double lM = 0; // mean anomaly
-
-            // gravitation coefficient
-            double mu =  3.986004415e+14;
-
-
-            // Inertial frame
-            Frame inertialFrame = FramesFactory.getEME2000();
-
-            // Orbit construction as Keplerian
-            Orbit initialOrbit = new KeplerianOrbit(a, e, i, omega, raan, lM, PositionAngle.MEAN,
-                    inertialFrame, currentDate, mu);
-
-            // Simple extrapolation with Keplerian motion
-            kepler = new KeplerianPropagator(initialOrbit);
-
-            // Set the propagator to slave mode (could be omitted as it is the default mode)
-            kepler.setSlaveMode();
+            FactoryManagedFrame ITRF = FramesFactory.getITRF(IERSConventions.IERS_2010, true);
+            this.earth = new OneAxisEllipsoid(Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
+                                              Constants.WGS84_EARTH_FLATTENING,
+                                              ITRF);
 
         } catch (OrekitException oe) {
 
@@ -94,45 +95,111 @@ public class OrbitScheduler {
 
     }
 
-    @Scheduled(fixedRate = 5000)
-    public void orbitStep() {
+    public EcksteinHechlerPropagator orbitToPropagator(Satellite satellite) {
 
         try {
 
-            // Step duration in seconds
-            double stepT = 60.;
+            double a = satellite.getA();
+            double e = satellite.getE();
+            double i = satellite.getI();
+            double omega = satellite.getOmega();
+            double raan = satellite.getRaan();
+            double lm = satellite.getLm();
 
-            SpacecraftState currentState = kepler.propagate(currentDate);
-            
-            // System.out.println("step " + cpt++);
-            // System.out.println(" time : " + currentState.getDate());
-            // System.out.println(" " + currentState.getOrbit());
+            double mu = Constants.WGS84_EARTH_MU;
+
+            Orbit initialOrbit = new KeplerianOrbit(a, e, i, omega, raan, lm, PositionAngle.MEAN,
+                    inertialFrame, currentDate, mu);
+
+            EcksteinHechlerPropagator propag = new EcksteinHechlerPropagator(initialOrbit,
+                                                                             Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
+                                                                             mu,
+                                                                             Constants.WGS84_EARTH_C20,
+                                                                             0.0,
+                                                                             0.0,
+                                                                             0.0,
+                                                                             0.0);
+
+            propag.setSlaveMode();
+
+            return propag;
+
+        } catch (OrekitException oe) {
+
+            System.err.println(oe.getMessage());
+
+            return null;
+
+        }
+
+    }
+
+    public void propagateAndSave(EcksteinHechlerPropagator propag, Satellite satellite, double dt) {
+
+        try {
+
+            AbsoluteDate insideDate = currentDate.shiftedBy(dt);
+
+            SpacecraftState currentState = propag.propagate(insideDate);
+            Orbit orbit = currentState.getOrbit();
+
+            OrbitType type = OrbitType.KEPLERIAN;
+            KeplerianOrbit currentOrbit = (KeplerianOrbit) type.convertType(orbit);
+
+            TimeStampedPVCoordinates coord = currentState.getPVCoordinates();
+            Vector3D position = coord.getPosition();
+
+            GeodeticPoint geoPoint = earth.transform(position, inertialFrame, insideDate);
+
+            System.out.println(geoPoint.getLatitude());
+            System.out.println(geoPoint.getLongitude());
 
             log.info(
                     "NowTime {}, Step {}, OrbitTime {}. Orbit {}",
                     dateFormat.format(new Date()),
-                    cpt++,
+                    cpt,
                     currentState.getDate(),
                     currentState.getOrbit()
+
             );
 
-            currentDate = currentDate.shiftedBy(stepT);
+            satellite.setA(currentOrbit.getA());
+            satellite.setE(currentOrbit.getE());
+            satellite.setI(currentOrbit.getI());
+            satellite.setOmega(currentOrbit.getPerigeeArgument());
+            satellite.setRaan(currentOrbit.getRightAscensionOfAscendingNode());
+            satellite.setLm(currentOrbit.getMeanAnomaly());
 
-            // updateSat();
+            repository.save(satellite);
 
         } catch (OrekitException oe) {
 
             System.err.println(oe.getMessage());
 
         }
-
     }
 
-//    @SendTo("/update/satellite")
-//    public Satellite updateSat() {
-//
-//        return new Satellite(1, 2, 3, 4, 5, 6);
-//
-//    }
+    @Scheduled(fixedRate = 5000)
+    public void intervalExe() {
+
+        double stepT = 10.0;
+
+        Iterable<Satellite> satellites = repository.findAll();
+
+        for (Satellite satellite : satellites) {
+
+            EcksteinHechlerPropagator propag = orbitToPropagator(satellite);
+            propagateAndSave(propag, satellite, stepT);
+
+        }
+
+        System.out.println();
+
+        cpt++;
+        currentDate = currentDate.shiftedBy(stepT);
+
+        template.convertAndSend("/update/newParameters", "Update!");
+
+    }
 
 }

@@ -1,11 +1,11 @@
 package com.seraco.simulator;
 
 import org.hipparchus.util.FastMath;
+import org.orekit.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-// tag::code[]
 @Component
 public class DatabaseLoader implements CommandLineRunner {
 
@@ -18,23 +18,40 @@ public class DatabaseLoader implements CommandLineRunner {
 
 	@Override
 	public void run(String... strings) throws Exception {
+
+	    double ae = Constants.WGS84_EARTH_EQUATORIAL_RADIUS;
+
+        double ra = 800.0 * 1000.0;
+        double rp = 700.0 * 1000.0;
+
+        double a = (rp + ra + 2 * ae) / 2.0;
+        double e = 1.0 - (rp + ae) / a;
+
 		this.repository.save(new Satellite(
-				24396159,
-				0.72831215,
-				FastMath.toRadians(7),
-				FastMath.toRadians(180),
-				FastMath.toRadians(261),
-				0
+				a,
+                e,
+				FastMath.toRadians(98.55),
+				FastMath.toRadians(90.0),
+				FastMath.toRadians(5.1917),
+                FastMath.toRadians(359.93)
         ));
 
         this.repository.save(new Satellite(
-                33432159,
-                0.88831215,
-                FastMath.toRadians(9),
-                FastMath.toRadians(145),
-                FastMath.toRadians(230),
-                0
+                a,
+                e,
+                FastMath.toRadians(9.0),
+                FastMath.toRadians(145.0),
+                FastMath.toRadians(230.0),
+                FastMath.toRadians(10.0)
+        ));
+
+        this.repository.save(new Satellite(
+                a,
+                e,
+                FastMath.toRadians(30.0),
+                FastMath.toRadians(55.0),
+                FastMath.toRadians(10.0),
+                FastMath.toRadians(100.0)
         ));
 	}
 }
-// end::code[]
