@@ -36,8 +36,8 @@ class App extends React.Component {
 		};
         this.loadAndRefresh = this.loadAndRefresh.bind(this);
         this.updateParameters = this.updateParameters.bind(this);
-		// 	this.width = 500;
-		// 	this.height = 500;
+		this.mapWidth = 770;
+		this.mapHeight = 550;
 	}
 
     loadAndRefresh() {
