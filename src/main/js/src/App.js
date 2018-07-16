@@ -1,21 +1,16 @@
 import React from 'react';
-import MapGL, {Marker, Popup, NavigationControl} from 'react-map-gl';
+import StaticMap, {Marker, Popup} from 'react-map-gl';
+
 import './App.css';
 
 import SatellitePin from './SatellitePin';
+import OrbitPin from './OrbitPin';
 import SatelliteInfo from './SatelliteInfo';
 
 const client = require('./client');
 const stompClient = require('./websocket-listener');
 
 const TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
-
-const navStyle = {
-	position: 'absolute',
-	top: 0,
-	left: 0,
-	padding: '10px'
-};
 
 class App extends React.Component {
 
@@ -33,6 +28,8 @@ class App extends React.Component {
 				height: 500,
 			},
 			popupInfo: null,
+			orbitMarkers: [],
+			hideOrbitMark: false,
 		};
         this.loadAndRefresh = this.loadAndRefresh.bind(this);
         this.updateParameters = this.updateParameters.bind(this);
@@ -47,7 +44,23 @@ class App extends React.Component {
     }
 
     updateParameters(message) {
-		this.loadAndRefresh()
+		this.loadAndRefresh();
+
+		var newState = [];
+
+		for (let i = 0; i < this.state.satellites.length; i++) {
+			newState.push({
+				latitude: this.state.satellites[i].lat,
+				longitude: this.state.satellites[i].lon,
+				color: this.state.satellites[i].color,
+			});
+		}
+
+		this.setState(prevState => ({
+			orbitMarkers: prevState.orbitMarkers.length > 5000 ?
+				[] :
+				prevState.orbitMarkers.concat(newState)
+		}))
 	}
 
 	_resize = () => {
@@ -90,8 +103,26 @@ class App extends React.Component {
 		);
     }
 
+	_renderOrbitMarker = (coords, index) => {
+		return (
+			<Marker key={`marker-${index}`}
+				longitude={coords.longitude}
+				latitude={coords.latitude}>
+				<OrbitPin size={8}
+					color={coords.color}
+					onClick={() => this.setState({popupInfo: true})} />
+			</Marker>
+		);
+    }
+
+	_hideOrbits = () => {
+		this.setState(prevState => ({
+			hideOrbitMark: !prevState.hideOrbitMark
+		}));
+	}
+
 	componentDidMount() {
-		this.loadAndRefresh()
+		// this.loadAndRefresh()
 
         stompClient.register([
 			{route: '/update/newParameters', callback: this.updateParameters}
@@ -110,9 +141,13 @@ class App extends React.Component {
 
 		return (
 			<div className="App">
+				<button onClick={this._hideOrbits}>
+					Toggle Ground Tracks
+				</button>
 				<SatelliteList satellites={this.state.satellites}/>
 				<div className="MapContainer"><div className="Map">
-					<MapGL
+					<StaticMap
+						ref={(reactMap) => {this.reactMap = reactMap;}}
 						{...viewport}
 						mapStyle="mapbox://styles/mapbox/dark-v9"
 						onViewportChange={this._updateViewport}
@@ -120,13 +155,11 @@ class App extends React.Component {
 
 						{this.state.satellites.map(this._renderSatelliteMarker)}
 
-						{this.state.satellites.map(this._renderPopup)}
+						{this.state.hideOrbitMark
+						&& this.state.orbitMarkers.map(this._renderOrbitMarker)}
 
-						<div className="nav" style={navStyle}>
-							<NavigationControl
-								onViewportChange={this._updateViewport}/>
-						</div>
-					</MapGL>
+						{this.state.satellites.map(this._renderPopup)}
+					</StaticMap>
 				</div></div>
 			</div>
 		)
@@ -144,14 +177,14 @@ class SatelliteList extends React.Component{
 					<tbody>
 						<tr>
 							<th>Satellite</th>
-							<th>a</th>
-							<th>e</th>
-							<th>i</th>
-	                        <th>pa</th>
-							<th>raan</th>
-							<th>omega</th>
-							<th>lon</th>
-							<th>lat</th>
+							<th>a [km]</th>
+							<th>e [ ]</th>
+							<th>i [rad]</th>
+	                        <th>pa [rad]</th>
+							<th>raan [rad]</th>
+							<th>omega [rad]</th>
+							<th>lon [deg]</th>
+							<th>lat [deg]</th>
 						</tr>
 						{satellites}
 					</tbody>
@@ -166,11 +199,12 @@ class Satellite extends React.Component{
 		var satNum = this.props.satellite._links.self.href;
 		satNum = satNum.split('/');
 		satNum = satNum[satNum.length - 1];
+		var aInKm = this.props.satellite.a / 1000.0;
 
 		return (
 			<tr>
 				<td bgcolor={this.props.satellite.color}>QBEE {satNum}</td>
-				<td>{this.props.satellite.a.toFixed(4)}</td>
+				<td>{aInKm.toFixed(4)}</td>
 				<td>{this.props.satellite.e.toFixed(4)}</td>
 				<td>{this.props.satellite.i.toFixed(4)}</td>
                 <td>{this.props.satellite.omega.toFixed(4)}</td>

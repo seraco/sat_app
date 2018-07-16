@@ -6,7 +6,7 @@ export default class SatelliteInfo extends PureComponent {
         var satNum = this.props.sat._links.self.href.split('/');
         satNum = satNum[satNum.length - 1];
         return (
-            <div>
+            <div style={{margin: "10px 5px 0px 5px"}}>
                 QBEE {satNum}
             </div>
         );

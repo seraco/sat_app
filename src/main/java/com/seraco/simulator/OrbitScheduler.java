@@ -17,7 +17,7 @@ import org.orekit.frames.Frame;
 import org.orekit.frames.FramesFactory;
 import org.orekit.orbits.*;
 import org.orekit.propagation.SpacecraftState;
-import org.orekit.propagation.analytical.EcksteinHechlerPropagator;
+import org.orekit.propagation.analytical.KeplerianPropagator;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
@@ -96,7 +96,7 @@ public class OrbitScheduler {
 
     }
 
-    public EcksteinHechlerPropagator orbitToPropagator(Satellite satellite) {
+    public KeplerianPropagator orbitToPropagator(Satellite satellite) {
 
         try {
 
@@ -112,14 +112,7 @@ public class OrbitScheduler {
             Orbit initialOrbit = new KeplerianOrbit(a, e, i, omega, raan, lm, PositionAngle.MEAN,
                     inertialFrame, currentDate, mu);
 
-            EcksteinHechlerPropagator propag = new EcksteinHechlerPropagator(initialOrbit,
-                                                                             Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
-                                                                             mu,
-                                                                             Constants.WGS84_EARTH_C20,
-                                                                             0.0,
-                                                                             0.0,
-                                                                             0.0,
-                                                                             0.0);
+            KeplerianPropagator propag = new KeplerianPropagator(initialOrbit);
 
             propag.setSlaveMode();
 
@@ -135,7 +128,7 @@ public class OrbitScheduler {
 
     }
 
-    public void propagateAndSave(EcksteinHechlerPropagator propag, Satellite satellite, double dt) {
+    public void propagateAndSave(KeplerianPropagator propag, Satellite satellite, double dt) {
 
         try {
 
@@ -182,7 +175,7 @@ public class OrbitScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 1000)
     public void intervalExe() {
 
         double stepT = 10.0;
@@ -191,7 +184,7 @@ public class OrbitScheduler {
 
         for (Satellite satellite : satellites) {
 
-            EcksteinHechlerPropagator propag = orbitToPropagator(satellite);
+            KeplerianPropagator propag = orbitToPropagator(satellite);
             propagateAndSave(propag, satellite, stepT);
 
         }
