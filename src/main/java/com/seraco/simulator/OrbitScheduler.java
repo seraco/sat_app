@@ -175,7 +175,7 @@ public class OrbitScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 2500)
     public void intervalExe() {
 
         double stepT = 10.0;

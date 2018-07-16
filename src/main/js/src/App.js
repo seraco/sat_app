@@ -108,7 +108,7 @@ class App extends React.Component {
 			<Marker key={`marker-${index}`}
 				longitude={coords.longitude}
 				latitude={coords.latitude}>
-				<OrbitPin size={8}
+				<OrbitPin size={5}
 					color={coords.color}
 					onClick={() => this.setState({popupInfo: true})} />
 			</Marker>
